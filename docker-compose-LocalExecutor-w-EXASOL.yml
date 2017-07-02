@@ -1,0 +1,30 @@
+version: '2'
+services:
+    postgres:
+        image: postgres:9.6
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+
+    webserver:
+        image: artur-pap/docker-airflow:1.8.1.1
+        restart: always
+        depends_on:
+            - postgres
+        environment:
+            - LOAD_EX=y
+            - EXECUTOR=Local
+        volumes:
+            - ./airflow/airflow.cfg:/usr/local/airflow/airflow.cfg:rw
+            - ./airflow/dags:/usr/local/airflow/dags:rw
+            - ./airflow/logs:/usr/local/airflow/logs:rw
+        ports:
+            - "8080:8080"
+        command: webserver
+    exasol:
+        image: exasol/docker-db:6.0.0-d1sc
+        privileged: true
+        depends_on:
+            - webserver
+

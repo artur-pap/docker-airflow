@@ -15,6 +15,9 @@ ENV TERM linux
 ARG AIRFLOW_VERSION=1.8.1
 ARG AIRFLOW_HOME=/usr/local/airflow
 
+ARG AIRFLOW_ADMIN_UNAME=airflow
+ARG AIRFLOW_ADMIN_UPASS=airflow
+
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -57,6 +60,7 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==$AIRFLOW_VERSION \
     && pip install celery[redis]==3.1.17 \
+    && pip install flask_bcrypt \
     && apt-get remove --purge -yqq $buildDeps \
     && apt-get clean \
     && rm -rf \
@@ -67,8 +71,15 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-COPY script/entrypoint.sh /entrypoint.sh
+RUN mkdir ${AIRFLOW_HOME}/jdbc
+RUN mkdir ${AIRFLOW_HOME}/dags
+RUN mkdir ${AIRFLOW_HOME}/logs
+
+COPY jdbc/*.jar ${AIRFLOW_HOME}/jdbc
+COPY script/airflow_security.py ${AIRFLOW_HOME}/airflow_security.py
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+
+COPY script/entrypoint.sh /entrypoint.sh
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
@@ -77,3 +88,4 @@ EXPOSE 8080 5555 8793
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/entrypoint.sh"]
+
