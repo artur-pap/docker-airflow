@@ -8,8 +8,7 @@ services:
             - POSTGRES_DB=airflow
 
     webserver:
-        #image: artur-pap/docker-airflow:1.8.1.1
-        image: 474661687332.dkr.ecr.us-west-2.amazonaws.com/docker-airflow:latest
+        image: docker-airflow-exasol
         restart: always
         depends_on:
             - postgres
@@ -17,12 +16,13 @@ services:
             - LOAD_EX=y
             - EXECUTOR=Local
         volumes:
-            #- ./airflow/airflow.cfg:/usr/local/airflow/airflow.cfg:rw
+            - ./airflow/airflow.cfg:/usr/local/airflow/airflow.cfg:rw
             - ./airflow/dags:/usr/local/airflow/dags:rw
             - ./airflow/logs:/usr/local/airflow/logs:rw
         ports:
             - "8080:8080"
         command: webserver
+
     exasol:
         image: exasol/docker-db:6.0.0-d1sc
         privileged: true
@@ -31,5 +31,4 @@ services:
         ports:
             - "8888:8888"
             - "6593:6593"
-            - "8563:8563"
 

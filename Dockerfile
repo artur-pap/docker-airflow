@@ -26,6 +26,25 @@ ENV LC_CTYPE en_US.UTF-8
 ENV LC_MESSAGES en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
+# Install Java.
+RUN \
+  echo "===> add webupd8 repository..." && \
+  apt-get update && \
+  apt-get install -yqq gnupg2 && \
+  echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list && \
+  echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list && \
+  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886 && \
+  apt-get update && \
+  \
+  \
+  echo "===> install Java"  && \
+  echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections  && \
+  echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections  && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --force-yes oracle-java8-installer oracle-java8-set-default
+
+# Define commonly used JAVA_HOME variable
+ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+
 RUN set -ex \
     && buildDeps=' \
         python-dev \
@@ -58,6 +77,7 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
+    && pip install JayDeBeApi==0.2.0 \
     && pip install apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==$AIRFLOW_VERSION \
     && pip install celery[redis]==3.1.17 \
     && pip install flask_bcrypt \
@@ -75,6 +95,7 @@ RUN mkdir ${AIRFLOW_HOME}/jdbc
 RUN mkdir ${AIRFLOW_HOME}/dags
 RUN mkdir ${AIRFLOW_HOME}/logs
 
+COPY jdbc/*.jar /usr/lib/jvm/java-8-oracle/jre/lib/ext
 COPY jdbc/*.jar ${AIRFLOW_HOME}/jdbc
 COPY script/airflow_security.py ${AIRFLOW_HOME}/airflow_security.py
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
